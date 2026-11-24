@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10131d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Vida en juego</title>
+<style>
+:root{--bg:#10131d;--panel:#191e2b;--panel2:#202637;--line:#30394e;--text:#f5f7ff;--muted:#9aa6bf;--lime:#c5f36a;--cyan:#71e2dc;--pink:#ff8fbd;--gold:#ffd276;--blue:#7aa8ff;--r:18px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:radial-gradient(ellipse at 70% -10%,#29334b 0,transparent 45%),var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif;min-height:100vh}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer}
+.app{max-width:480px;margin:auto;padding:calc(14px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom))}
+h2{font-size:17px;letter-spacing:-.02em;margin:0}h3{font-size:14px;margin:0}
+.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:10.5px;font-weight:800;color:var(--lime)}
+.muted{color:var(--muted)}.small{font-size:12px}
+.card{background:linear-gradient(145deg,rgba(29,35,51,.97),rgba(23,28,41,.97));border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.row{display:flex;align-items:center;gap:10px}.between{justify-content:space-between}.grow{flex:1;min-width:0}
+.pill{border:1px solid var(--line);background:#171c29;border-radius:99px;padding:5px 10px;font-size:12px;color:var(--muted);white-space:nowrap}
+.pill.gold{color:var(--gold);font-weight:700}
+.badge{display:grid;place-items:center;width:46px;height:46px;border-radius:15px;background:var(--lime);color:#202718;font-weight:900;font-size:21px;flex:none}
+.track{height:8px;background:#343d50;border-radius:99px;overflow:hidden;margin-top:6px}
+.fill{height:100%;background:linear-gradient(90deg,var(--lime),#e3ff9f);border-radius:99px;transition:width .4s}
+.habit{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#1b2130;margin-top:9px}
+.habit.done{border-color:#91b85088;background:#263124}
+.check{width:36px;height:36px;border:1px solid #46516a;border-radius:12px;background:#222a3b;display:grid;place-items:center;flex:none;font-size:17px}
+.done .check{background:var(--lime);border-color:var(--lime);color:#182011}
+.ico{font-size:24px}
+.tag{font-size:10.5px;font-weight:700;border-radius:8px;padding:2px 7px;display:inline-block;margin-top:2px}
+.tag.v{background:#1f3a3a;color:var(--cyan)}.tag.s{background:#2d2f3f;color:var(--muted)}
+.reward{font-size:12px;color:var(--lime);font-weight:800;white-space:nowrap}
+.btn{border:0;background:var(--lime);color:#1b2413;font-weight:800;border-radius:12px;padding:9px 13px;font-size:13px}
+.btn.ghost{background:#222a3b;color:var(--text);border:1px solid var(--line)}
+.btn.cyan{background:var(--cyan)}.btn:disabled{opacity:.5}
+.btn.danger{background:#3a2430;color:var(--pink);border:1px solid #5b3345}
+.stage{display:grid;place-items:center;position:relative;padding:6px 0}
+.av{width:210px;height:240px;filter:drop-shadow(0 12px 10px #080a1180)}
+.stat{margin-top:12px}.stat .row{font-size:13px}
+.stat .track{height:9px}
+.stat.f .fill{background:linear-gradient(90deg,#ff8f8f,#ffc2a1)}.stat.v .fill{background:linear-gradient(90deg,var(--cyan),#b6f5ef)}
+.stat.m .fill{background:linear-gradient(90deg,var(--blue),#c2d6ff)}.stat.d .fill{background:linear-gradient(90deg,var(--gold),#ffe9b8)}
+.item{display:flex;align-items:center;gap:12px;padding:10px;border:1px solid var(--line);border-radius:14px;background:#1a202e;margin-top:9px}
+.item .e{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#283145;font-size:23px}
+.chap{display:flex;gap:12px;padding:11px;border:1px solid var(--line);border-radius:14px;margin-top:9px;background:#1a202e}
+.chap.cur{border-color:#91b850;background:#232b22}.chap.lock{opacity:.5}
+.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}
+.cell{aspect-ratio:1;border-radius:7px;background:#232b3d;display:grid;place-items:center;font-size:10px;color:#6b7690}
+.cell.ok{background:var(--lime);color:#1d2812}.cell.part{background:#63753a;color:#e8f3cc}.cell.sh{background:var(--cyan);color:#10343a}.cell.today{outline:2px solid var(--gold)}
+.field{width:100%;background:#131824;border:1px solid var(--line);border-radius:12px;padding:11px 12px;outline:none}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label.s{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.nav{position:fixed;left:0;right:0;bottom:0;background:rgba(16,19,29,.94);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;justify-content:center;padding:6px 8px calc(6px + env(safe-area-inset-bottom));z-index:5}
+.nav-in{display:flex;width:100%;max-width:480px}
+.tab{flex:1;border:0;background:none;padding:6px 0;color:var(--muted);font-size:11px;display:grid;gap:1px;justify-items:center}
+.tab span{font-size:22px}.tab.on{color:var(--lime);font-weight:800}
+.toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom));transform:translate(-50%,16px);background:var(--lime);color:#192111;font-weight:800;padding:11px 16px;border-radius:13px;opacity:0;pointer-events:none;transition:.25s;z-index:20;max-width:92vw;text-align:center;font-size:13px}
+.toast.show{opacity:1;transform:translate(-50%,0)}.toast.bad{background:var(--pink)}
+.modal{position:fixed;inset:0;background:#080b12cc;display:none;place-items:center;z-index:30;padding:24px}
+.modal.show{display:grid}.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:24px;text-align:center;max-width:340px;width:100%}
+.modal .big{font-size:54px;font-weight:900;color:var(--lime);letter-spacing:-.04em}
+.lockbox{border:1px dashed var(--line);border-radius:14px;padding:12px;margin-top:9px;color:var(--muted);font-size:13px}
+.pick{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:1px solid var(--line);background:#1b2130;border-radius:14px;padding:10px 12px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="app" id="view"></div>
+<nav class="nav"><div class="nav-in" id="nav"></div></nav>
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
+<script>
+(()=>{
+'use strict';
+/* ---------- Configuración del juego ---------- */
+const KEY='vida-en-juego-v2';
+const ATTRS={fuerza:{n:'Fuerza',e:'💪',c:'f'},vitalidad:{n:'Vitalidad',e:'❤️',c:'v'},mente:{n:'Mente',e:'🧠',c:'m'},disciplina:{n:'Disciplina',e:'🛡️',c:'d'}};
+const SLOT_LEVELS=[1,1,3,5,8,12];                 // nivel al que se desbloquea cada hueco de hábito
+const CH=[
+ {from:1, name:'El despertar', title:'Aprendiz', goal:'Aprende a aparecer cada día. Dos hábitos, nada más.'},
+ {from:3, name:'El camino',    title:'Viajero',  goal:'Tercer hueco desbloqueado. Empieza a construir racha.'},
+ {from:6, name:'La forja',     title:'Forjado',  goal:'La constancia ya pesa más que la motivación.'},
+ {from:10,name:'La prueba',    title:'Probado',  goal:'Cinco hábitos y semanas completas.'},
+ {from:15,name:'Leyenda',      title:'Leyenda',  goal:'Eres alguien disciplinado. Ahora solo toca mantenerlo.'}
+];
+const TUNIC=['#71e2dc','#7aa8ff','#c5f36a','#ffd276','#ff8fbd'];
+const PRESETS=[
+ {id:'steps',  name:'Llegar a 8.000 pasos',     icon:'👟',attr:'vitalidad',verify:{type:'steps',  target:8000}},
+ {id:'workout',name:'Entrenar 30 minutos',      icon:'🏋️',attr:'fuerza',   verify:{type:'workout',target:30}},
+ {id:'sleep',  name:'Dormir 7 horas o más',     icon:'🌙',attr:'vitalidad',verify:{type:'sleep',  target:7}},
+ {id:'mindful',name:'Meditar 5 minutos',        icon:'🧘',attr:'mente',    verify:{type:'mindful',target:5}},
+ {id:'read',   name:'Leer 10 minutos',          icon:'📖',attr:'mente'},
+ {id:'water',  name:'Beber 2 litros de agua',   icon:'💧',attr:'vitalidad'},
+ {id:'plan',   name:'Planificar el día',        icon:'🗒️',attr:'disciplina'},
+ {id:'wake',   name:'Levantarme a mi hora',     icon:'⏰',attr:'disciplina'},
+ {id:'phone',  name:'Sin móvil la 1ª hora',     icon:'📵',attr:'disciplina'}
+];
+const ITEMS=[{id:'hat',name:'Gorro de explorador',e:'🧢',cost:40},{id:'cape',name:'Capa estelar',e:'🦸',cost:90},{id:'crown',name:'Corona de luz',e:'👑',cost:160}];
+const BOSSES=[['Sombra de la Pereza','👹'],['Rey del Sofá','🛋️'],['Dragón de la Excusa','🐉'],['Niebla del Mañana','🌫️']];
+const XP_SELF=20, XP_VERIFIED=30, XP_DAY_BONUS=30, XP_BOSS=100;
+
+/* ---------- Utilidades de fecha ---------- */
+const keyOf=d=>d.toLocaleDateString('en-CA');
+const T=()=>keyOf(new Date());
+const parse=k=>new Date(k+'T12:00:00');
+const addDays=(k,n)=>{const d=parse(k);d.setDate(d.getDate()+n);return keyOf(d)};
+const weekKey=k=>addDays(k,-((parse(k).getDay()+6)%7));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id);
+
+/* ---------- Estado ---------- */
+const fresh=()=>({xp:0,coins:0,attr:{fuerza:0,vitalidad:0,mente:0,disciplina:0},habits:[],days:{},owned:[],equipped:null,shields:1,lastSeen:null,lastShieldDay:null,bosses:{},sim:{day:null,steps:0,workoutMin:0,avgHR:0,sleepH:0,mindfulMin:0,manual:false}});
+let data;try{data=Object.assign(fresh(),JSON.parse(localStorage.getItem(KEY))||{})}catch{data=fresh()}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(data))}catch{}};
+let ui={tab:'hoy'}, pendingModal=null;
+
+/* ---------- Niveles, capítulos, huecos ---------- */
+const need=l=>80+30*l;
+function lv(xp){let l=1;while(xp>=need(l)){xp-=need(l);l++}return{level:l,cur:xp,next:need(l)}}
+const chapterIdx=l=>CH.reduce((a,c,i)=>l>=c.from?i:a,0);
+const slotsFor=l=>SLOT_LEVELS.filter(x=>x<=l).length;
+const attrLevel=x=>Math.floor(Math.sqrt(x/25))+1;
+
+/* ---------- Registro diario ---------- */
+function rec(k){return data.days[k]||(data.days[k]={sched:[],done:[],xp:{},bonus:false,shielded:false})}
+function isOk(k){const r=data.days[k];return !!r&&(r.shielded||(r.sched.length>0&&r.sched.every(i=>r.done.includes(i))))}
+function streak(){let n=0,d=T();if(isOk(d))n++;d=addDays(d,-1);while(isOk(d)&&n<999){n++;d=addDays(d,-1)}return n}
+
+function rollover(){
+  const t=T(),notes=[];
+  if(data.lastSeen&&data.lastSeen<t){
+    let d=data.lastSeen,guard=0;
+    while(d<t&&guard++<60){
+      if(!isOk(d)&&isOk(addDays(d,-1))&&data.shields>0){rec(d).shielded=true;data.shields--;notes.push('🛡️ Un escudo protegió tu racha')}
+      d=addDays(d,1);
+    }
+  }
+  data.lastSeen=t;
+  const r=rec(t);data.habits.forEach(h=>{if(!r.sched.includes(h.id))r.sched.push(h.id)});
+  if(data.sim.day!==t)data.sim={day:t,steps:0,workoutMin:0,avgHR:0,sleepH:0,mindfulMin:0,manual:false};
+  ensureBoss();save();
+  if(notes.length)setTimeout(()=>toast(notes[0]),400);
+}
+
+/* ---------- Jefe semanal ---------- */
+function ensureBoss(){const wk=weekKey(T());if(!data.bosses[wk])data.bosses[wk]={max:Math.max(5,Math.ceil(.7*7*Math.max(2,data.habits.length))),claimed:false}}
+function bossDamage(wk){let n=0;for(let i=0;i<7;i++){const r=data.days[addDays(wk,i)];if(r)n+=r.done.length}return n}
+function bossInfo(){const wk=weekKey(T());const b=data.bosses[wk];const idx=Math.floor(parse(wk).getTime()/6.048e8)%BOSSES.length;return{wk,b,dmg:bossDamage(wk),name:BOSSES[idx][0],emoji:BOSSES[idx][1]}}
+
+/* ---------- Ganar / perder XP ---------- */
+function gain(xp,attr){
+  const b=lv(data.xp);data.xp+=xp;data.attr[attr]=(data.attr[attr]||0)+xp;data.coins+=Math.round(xp/2);
+  const a=lv(data.xp);
+  if(a.level>b.level)pendingModal={level:a.level,chapter:chapterIdx(a.level)>chapterIdx(b.level)?chapterIdx(a.level):null,slot:slotsFor(a.level)>slotsFor(b.level)};
+}
+function lose(xp,attr){data.xp=Math.max(0,data.xp-xp);data.attr[attr]=Math.max(0,(data.attr[attr]||0)-xp);data.coins=Math.max(0,data.coins-Math.round(xp/2))}
+
+function afterAction(undo){
+  const t=T(),r=rec(t);
+  if(isOk(t)&&!r.bonus){
+    r.bonus=true;gain(XP_DAY_BONUS,'disciplina');toast('🌟 ¡Día completo! +'+XP_DAY_BONUS+' XP');
+    if(streak()%7===0&&data.lastShieldDay!==t){data.shields=Math.min(2,data.shields+1);data.lastShieldDay=t;toast('🛡️ Racha de '+streak()+' días: ganas un escudo')}
+  }else if(undo&&r.bonus&&!isOk(t)){r.bonus=false;lose(XP_DAY_BONUS,'disciplina')}
+  const bi=bossInfo();
+  if(bi.b&&!bi.b.claimed&&bi.dmg>=bi.b.max){bi.b.claimed=true;gain(XP_BOSS,'disciplina');toast('⚔️ ¡Has derrotado a '+bi.name+'! +'+XP_BOSS+' XP')}
+  save();render();
+  if(pendingModal){showModal(pendingModal);pendingModal=null}
+}
+
+function complete(h,verified){
+  const r=rec(T());if(r.done.includes(h.id))return;
+  const xp=verified?XP_VERIFIED:XP_SELF;r.done.push(h.id);r.xp[h.id]=xp;gain(xp,h.attr);
+  toast((verified?'⌚ Verificado':'✅ Hecho')+' · +'+xp+' XP');afterAction(false);
+}
+function undo(h){
+  const r=rec(T());const i=r.done.indexOf(h.id);if(i<0||h.verify)return;
+  r.done.splice(i,1);lose(r.xp[h.id]||XP_SELF,h.attr);delete r.xp[h.id];afterAction(true);
+}
+
+/* ---------- Salud (puente HealthKit) ----------
+   En la app de iPhone (Capacitor) existe el plugin nativo "VidaHealth" y se leen
+   los datos reales de Apple Salud. En un navegador normal se usa el simulador. */
+const Health={
+  _p:undefined,
+  plugin(){
+    if(this._p!==undefined)return this._p;
+    const C=window.Capacitor;this._p=null;
+    if(C&&typeof C.isNativePlatform==='function'&&C.isNativePlatform()){try{this._p=C.registerPlugin('VidaHealth')}catch{}}
+    return this._p;
+  },
+  imported(){const h=data.health;return h&&h.day===T()?h:null},
+  async today(){
+    const p=this.plugin();
+    if(p){await p.requestAuthorization();return p.today()}      // app nativa: lee Apple Salud
+    const h=this.imported();if(h)return h;                       // web: datos importados del Atajo
+    if(data.devMode)return Object.assign({},data.sim);           // modo prueba
+    throw new Error('Primero importa tus datos de Salud de hoy (botón Importar).');
+  },
+  isReal(){return !!this.plugin()}
+};
+const hora=ts=>new Date(ts).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+const resumen=s=>Math.round(s.steps).toLocaleString('es-ES')+' pasos · '+Math.round(s.workoutMin)+' min de entreno ('+Math.round(s.avgHR)+' lpm) · '+s.sleepH+' h de sueño · '+Math.round(s.mindfulMin)+' min de meditación';
+/* Importa el texto JSON que copia el Atajo de iOS. Solo se aceptan datos con la fecha de hoy. */
+function importHealth(text){
+  let j;try{j=JSON.parse(text)}catch{return{ok:false,msg:'El portapapeles no contiene datos del Atajo.'}}
+  if(!j||typeof j!=='object'||j.fecha!==T())return{ok:false,msg:'Los datos no son de hoy ('+((j&&j.fecha)||'sin fecha')+'). Ejecuta el Atajo otra vez.'};
+  const n=(v,max)=>{v=Number(String(v).replace(',','.'));return isFinite(v)&&v>=0&&v<=max?v:0};
+  data.health={day:T(),ts:Date.now(),steps:n(j.pasos,100000),workoutMin:n(j.entrenoMin,600),avgHR:n(j.pulsoMedio,230),sleepH:n(j.suenoH,24),mindfulMin:n(j.meditacionMin,600),manual:false};
+  save();return{ok:true};
+}
+function evaluate(v,s){
+  const f=n=>Math.round(n).toLocaleString('es-ES');
+  if(s.manual&&v.type!=='steps')return{ok:false,msg:'Ese dato se introdujo a mano, no cuenta.'};
+  switch(v.type){
+    case 'steps':return s.steps>=v.target?{ok:true}:{ok:false,msg:'Llevas '+f(s.steps)+' de '+f(v.target)+' pasos.'};
+    case 'workout':
+      if(s.workoutMin<v.target)return{ok:false,msg:'Entreno registrado: '+f(s.workoutMin)+' de '+v.target+' min.'};
+      if(s.avgHR<105)return{ok:false,msg:'Pulsación media de '+f(s.avgHR)+' lpm: muy baja para contar como entreno (mínimo 105).'};
+      if(s.avgHR>195)return{ok:false,msg:'Pulsación media de '+f(s.avgHR)+' lpm: dato no válido.'};
+      return{ok:true};
+    case 'sleep':return s.sleepH>=v.target?{ok:true}:{ok:false,msg:'Sueño registrado: '+s.sleepH+' de '+v.target+' h.'};
+    case 'mindful':return s.mindfulMin>=v.target?{ok:true}:{ok:false,msg:'Meditación registrada: '+f(s.mindfulMin)+' de '+v.target+' min.'};
+  }
+  return{ok:false,msg:'Hábito sin criterio.'};
+}
+async function verify(h){
+  try{const s=await Health.today();const res=evaluate(h.verify,s);if(res.ok)complete(h,true);else toast(res.msg,true)}
+  catch(err){toast((err&&err.message)||'No pude leer los datos de Salud.',true)}
+}
+
+/* ---------- Personaje (SVG) ---------- */
+function avatar(stage,eq){
+  const c=TUNIC[stage];
+  return `<svg viewBox="0 0 200 230" class="av" role="img" aria-label="Tu personaje">
+  <defs><radialGradient id="g"><stop offset="0" stop-color="${c}" stop-opacity=".5"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient></defs>
+  <circle cx="100" cy="120" r="${68+stage*9}" fill="url(#g)"/>
+  ${eq==='cape'?'<path d="M62 100 Q38 170 50 208 L150 208 Q162 170 138 100Z" fill="#ff8fbd"/>':''}
+  <rect x="78" y="168" width="20" height="40" rx="8" fill="#2a3350"/><rect x="102" y="168" width="20" height="40" rx="8" fill="#2a3350"/>
+  <rect x="74" y="200" width="26" height="12" rx="6" fill="#171c29"/><rect x="100" y="200" width="26" height="12" rx="6" fill="#171c29"/>
+  <rect x="52" y="106" width="18" height="52" rx="9" fill="${c}"/><rect x="130" y="106" width="18" height="52" rx="9" fill="${c}"/>
+  <circle cx="61" cy="162" r="8" fill="#f1c7a0"/><circle cx="139" cy="162" r="8" fill="#f1c7a0"/>
+  <rect x="66" y="98" width="68" height="78" rx="22" fill="${c}"/>
+  <rect x="66" y="150" width="68" height="9" fill="#2a3350" opacity=".55"/>
+  ${stage>=1?'<rect x="70" y="96" width="60" height="13" rx="6" fill="#ffd276"/>':''}
+  ${stage>=2?'<circle cx="62" cy="108" r="14" fill="#ffd276"/><circle cx="138" cy="108" r="14" fill="#ffd276"/>':''}
+  ${stage>=3?'<rect x="154" y="68" width="6" height="84" rx="3" fill="#dfe6f5"/><rect x="146" y="148" width="22" height="7" rx="3" fill="#ffd276"/>':''}
+  ${stage>=4?'<polygon points="100,120 105,132 118,132 108,140 112,153 100,145 88,153 92,140 82,132 95,132" fill="#fff"/>':''}
+  <circle cx="100" cy="70" r="32" fill="#f1c7a0"/>
+  <path d="M68 68 Q68 34 100 34 Q132 34 132 68 Q118 50 100 53 Q82 50 68 68Z" fill="#3b2f2f"/>
+  <circle cx="89" cy="72" r="3.6" fill="#1a1f2e"/><circle cx="111" cy="72" r="3.6" fill="#1a1f2e"/>
+  <path d="M90 84 Q100 92 110 84" stroke="#1a1f2e" stroke-width="3" fill="none" stroke-linecap="round"/>
+  ${eq==='hat'?'<path d="M64 52 Q100 4 136 52 Q100 40 64 52Z" fill="#c5f36a"/><rect x="60" y="48" width="80" height="8" rx="4" fill="#9ccd4a"/>':''}
+  ${eq==='crown'?'<path d="M70 44 L78 16 L92 34 L100 12 L108 34 L122 16 L130 44Z" fill="#ffd276"/>':''}
+  </svg>`;
+}
+
+/* ---------- Vistas ---------- */
+function headCard(){
+  const L=lv(data.xp),ci=chapterIdx(L.level),st=streak();
+  return `<div class="row between" style="margin-bottom:12px"><div><div class="eyebrow">${esc(CH[ci].name)}</div><div class="small muted">${esc(new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long'}).format(new Date()))}</div></div>
+  <div class="row"><span class="pill gold">✧ ${data.coins}</span></div></div>
+  <div class="card"><div class="row"><div class="badge">${L.level}</div><div class="grow"><div class="row between"><h2>${CH[ci].title}</h2><span class="small muted">${L.cur} / ${L.next} XP</span></div><div class="track"><div class="fill" style="width:${Math.round(L.cur/L.next*100)}%"></div></div></div></div>
+  <div class="row" style="margin-top:12px;gap:8px"><span class="pill">🔥 ${st} ${st===1?'día':'días'}</span><span class="pill">🛡️ ${data.shields} ${data.shields===1?'escudo':'escudos'}</span><span class="pill">${data.xp} XP total</span></div></div>`;
+}
+function pickerHtml(){
+  const L=lv(data.xp),slots=slotsFor(L.level),free=slots-data.habits.length;
+  const have=new Set(data.habits.map(h=>h.id));
+  let out='';
+  if(free>0){
+    out+=`<div class="card"><h2>${data.habits.length?'Hueco libre':'Elige tu primer hábito'}</h2><p class="small muted" style="margin:4px 0 0">${data.habits.length?'Tienes un hueco desbloqueado.':'Empieza pequeño: son solo dos huecos al principio.'} El símbolo ⌚ indica que se verifica con tu Apple Watch.</p>`;
+    out+=PRESETS.filter(p=>!have.has(p.id)).map(p=>`<button class="pick" data-act="adopt" data-id="${p.id}"><span class="ico">${p.icon}</span><span class="grow"><b>${esc(p.name)}</b><br><span class="small muted">${ATTRS[p.attr].e} ${ATTRS[p.attr].n}${p.verify?' · ⌚ verificado':''}</span></span><span class="reward">＋</span></button>`).join('');
+    out+='</div>';
+  }
+  const next=SLOT_LEVELS.find(x=>x>L.level);
+  if(next)out+=`<div class="lockbox">🔒 Próximo hueco de hábito en el nivel ${next}. La disciplina se construye de uno en uno.</div>`;
+  return out;
+}
+function viewHoy(){
+  const r=rec(T());
+  let h=headCard();
+  const done=data.habits.filter(x=>r.done.includes(x.id)).length;
+  h+=`<div class="card"><div class="row between"><h2>Misiones de hoy</h2><span class="small muted">${done} de ${data.habits.length}</span></div>`;
+  if(data.habits.some(x=>x.verify)&&!Health.isReal()){const imp=Health.imported();h+=`<div class="lockbox row between" style="margin:12px 0 0"><span>⌚ ${imp?'Salud importada a las '+hora(imp.ts):'Sin datos de Salud de hoy'}</span><button class="btn cyan" data-act="import">Importar</button></div>`}
+  if(!data.habits.length)h+='<p class="muted small">Aún no hay misiones.</p>';
+  h+=data.habits.map(x=>{
+    const ok=r.done.includes(x.id);
+    const act=x.verify?(ok?'<div class="check">✓</div>':`<button class="btn cyan" data-act="verify" data-id="${esc(x.id)}">Verificar</button>`):`<button class="check" data-act="toggle" data-id="${esc(x.id)}" aria-label="Marcar ${esc(x.name)}">${ok?'✓':''}</button>`;
+    return `<div class="habit ${ok?'done':''}"><span class="ico">${esc(x.icon||'🌱')}</span><div class="grow"><div><b>${esc(x.name)}</b></div><span class="tag ${x.verify?'v':'s'}">${x.verify?'⌚ Verificado':'✋ Autodeclarado'}</span> <span class="small muted">${ATTRS[x.attr].e}</span></div><div class="reward">+${x.verify?XP_VERIFIED:XP_SELF}</div>${act}</div>`;
+  }).join('');
+  h+=`<p class="small muted" style="margin:12px 2px 0">Completa todas para ganar +${XP_DAY_BONUS} XP extra. Los hábitos verificados dan más XP y no se pueden marcar a mano.</p></div>`;
+  h+=pickerHtml();
+  return h;
+}
+function viewPersonaje(){
+  const L=lv(data.xp),ci=chapterIdx(L.level);
+  let h=`<div class="eyebrow" style="margin-bottom:10px">Tu personaje</div><div class="card"><div class="stage">${avatar(ci,data.equipped)}</div><div style="text-align:center"><h2>${CH[ci].title} · Nivel ${L.level}</h2><p class="small muted" style="margin:3px 0 0">Cambia de aspecto al entrar en un capítulo nuevo.</p></div></div>`;
+  h+='<div class="card"><h2>Atributos</h2>';
+  h+=Object.keys(ATTRS).map(k=>{const x=data.attr[k]||0,l=attrLevel(x),lo=25*(l-1)*(l-1),hi=25*l*l;return `<div class="stat ${ATTRS[k].c}"><div class="row between"><span>${ATTRS[k].e} ${ATTRS[k].n}</span><b>Nv ${l}</b></div><div class="track"><div class="fill" style="width:${Math.round((x-lo)/(hi-lo)*100)}%"></div></div></div>`}).join('');
+  h+='<p class="small muted" style="margin:12px 0 0">Cada hábito sube el atributo que trabaja. Así ves qué parte de ti estás forjando.</p></div>';
+  h+='<div class="card"><h2>🛍️ Tienda</h2>'+ITEMS.map(i=>{
+    const own=data.owned.includes(i.id),eq=data.equipped===i.id;
+    return `<div class="item"><div class="e">${i.e}</div><div class="grow"><b class="small">${i.name}</b><div class="small muted">${own?'Tuyo':'✧ '+i.cost}</div></div><button class="btn ghost" data-act="buy" data-id="${i.id}" ${!own&&data.coins<i.cost?'disabled':''}>${eq?'Quitar':own?'Equipar':'Comprar'}</button></div>`;
+  }).join('')+'</div>';
+  return h;
+}
+function viewAventura(){
+  const L=lv(data.xp),ci=chapterIdx(L.level),bi=bossInfo();
+  let h='<div class="eyebrow" style="margin-bottom:10px">Aventura</div>';
+  const pct=bi.b?Math.min(100,Math.round(bi.dmg/bi.b.max*100)):0;
+  h+=`<div class="card"><div class="row"><span style="font-size:40px">${bi.emoji}</span><div class="grow"><div class="eyebrow" style="color:var(--pink)">Jefe de la semana</div><h2>${bi.name}</h2></div></div>
+  <div class="track" style="height:12px"><div class="fill" style="width:${pct}%;background:linear-gradient(90deg,var(--pink),#ffc1da)"></div></div>
+  <p class="small muted" style="margin:8px 0 0">${bi.b&&bi.b.claimed?'¡Derrotado esta semana! 🏆':`Cada hábito cumplido le quita 1 de vida. Llevas ${bi.dmg} de ${bi.b?bi.b.max:'?'}. Recompensa: +${XP_BOSS} XP.`}</p></div>`;
+  h+='<div class="card"><h2>Capítulos</h2>'+CH.map((c,i)=>{
+    const cls=i===ci?'cur':(c.from>L.level?'lock':'');
+    return `<div class="chap ${cls}"><div class="ico">${i<ci?'✅':i===ci?'📍':'🔒'}</div><div><b>${i+1}. ${c.name}</b><div class="small muted">Nivel ${c.from}+ · ${c.goal}</div></div></div>`;
+  }).join('')+'</div>';
+  // Calendario de 28 días
+  const t=T();let cells='';
+  for(let i=27;i>=0;i--){
+    const k=addDays(t,-i),r=data.days[k];let cls='';
+    if(r&&r.shielded)cls='sh';else if(isOk(k))cls='ok';else if(r&&r.done.length)cls='part';
+    cells+=`<div class="cell ${cls} ${k===t?'today':''}">${parse(k).getDate()}</div>`;
+  }
+  h+=`<div class="card"><h2>Últimos 28 días</h2><div class="heat">${cells}</div><p class="small muted" style="margin:10px 0 0">Verde: día completo · verde oscuro: parcial · azul: protegido por escudo.</p></div>`;
+  return h;
+}
+function numField(k,label,step){return `<div><label class="s">${label}</label><input class="field" type="number" inputmode="decimal" min="0" step="${step||1}" data-sim="${k}" value="${data.sim[k]}"></div>`}
+function viewAjustes(){
+  let h='<div class="eyebrow" style="margin-bottom:10px">Ajustes</div>';
+  const imp=Health.imported();
+  h+='<div class="card"><h2>⌚ Datos de Salud</h2>';
+  if(Health.isReal()){
+    h+='<p class="small muted" style="margin:4px 0 12px">Conectado a Apple Salud.</p><button class="btn ghost" data-act="healthdebug">Probar lectura de Apple Salud</button>';
+  }else{
+    h+=`<p class="small muted" style="margin:4px 0 12px">${imp?'Importados hoy a las '+hora(imp.ts)+': '+resumen(imp)+'.':'Hoy no has importado datos. Ejecuta tu Atajo de Salud y pulsa Importar.'}</p><button class="btn cyan" data-act="import">Importar desde el portapapeles</button>
+    <label class="row small muted" style="margin-top:14px"><input type="checkbox" data-dev ${data.devMode?'checked':''}> Modo prueba (simulador, sin verificación real)</label>`;
+    if(data.devMode)h+=`<div class="grid2" style="margin-top:12px">${numField('steps','Pasos hoy',100)}${numField('workoutMin','Entreno (min)')}${numField('avgHR','Pulsación media (lpm)')}${numField('sleepH','Sueño (h)',.5)}${numField('mindfulMin','Meditación (min)')}</div>
+    <div class="row" style="margin-top:12px"><button class="btn ghost" data-act="simfill">Simular día activo</button><button class="btn ghost" data-act="simzero">Poner a cero</button></div>`;
+  }
+  h+='</div>';
+  h+='<div class="card"><h2>Mis hábitos</h2>'+(data.habits.length?data.habits.map(x=>`<div class="item"><div class="e">${esc(x.icon||'🌱')}</div><div class="grow"><b class="small">${esc(x.name)}</b><div class="small muted">${x.verify?'⌚ Verificado':'✋ Autodeclarado'} · ${ATTRS[x.attr].n}</div></div><button class="btn danger" data-act="del" data-id="${esc(x.id)}">Quitar</button></div>`).join(''):'<p class="small muted">Sin hábitos.</p>');
+  const free=slotsFor(lv(data.xp).level)-data.habits.length;
+  h+=free>0?`<form id="custom" style="margin-top:14px"><label class="s">Hábito propio (se autodeclara)</label><input class="field" name="name" maxlength="40" placeholder="Ej.: Estirar 5 minutos" required><div class="row" style="margin-top:8px"><select class="field" name="attr">${Object.keys(ATTRS).map(k=>`<option value="${k}">${ATTRS[k].e} ${ATTRS[k].n}</option>`).join('')}</select><button class="btn" type="submit">Añadir</button></div></form>`:'<p class="small muted" style="margin:12px 0 0">No tienes huecos libres ahora mismo.</p>';
+  h+='</div>';
+  h+='<div class="card"><h2>Copia de seguridad</h2><p class="small muted" style="margin:4px 0 12px">Tu partida vive en este iPhone. Copia una copia y pégala en Notas por si algún día cambias de móvil.</p><div class="row"><button class="btn ghost" data-act="backup">Copiar copia</button><button class="btn ghost" data-act="restore">Restaurar</button></div></div>';
+  h+='<div class="card"><h2>Partida</h2><p class="small muted" style="margin:4px 0 12px">Tu progreso se guarda en este dispositivo.</p><button class="btn danger" data-act="reset">Empezar de cero</button></div>';
+  return h;
+}
+
+const TABS=[['hoy','🎯','Hoy'],['personaje','🧙','Personaje'],['aventura','🗺️','Aventura'],['ajustes','⚙️','Ajustes']];
+function render(){
+  const v={hoy:viewHoy,personaje:viewPersonaje,aventura:viewAventura,ajustes:viewAjustes}[ui.tab]();
+  const y=window.scrollY;$('view').innerHTML=v;window.scrollTo(0,y);
+  $('nav').innerHTML=TABS.map(t=>`<button class="tab ${ui.tab===t[0]?'on':''}" data-tab="${t[0]}"><span>${t[1]}</span>${t[2]}</button>`).join('');
+}
+
+/* ---------- Avisos ---------- */
+let tt;function toast(m,bad){const el=$('toast');el.textContent=m;el.classList.toggle('bad',!!bad);el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),bad?3600:2200)}
+function showModal(m){
+  let extra='';
+  if(m.chapter!==null)extra+=`<p><b>Nuevo capítulo:</b> ${CH[m.chapter].name}<br><span class="small muted">Tu personaje evoluciona.</span></p>`;
+  if(m.slot)extra+='<p><b>🔓 Nuevo hueco de hábito</b><br><span class="small muted">Elígelo en la pestaña Hoy.</span></p>';
+  $('modalBox').innerHTML=`<div class="eyebrow">¡Subes de nivel!</div><div class="big">${m.level}</div>${extra}<button class="btn" data-act="closeModal" style="margin-top:8px;width:100%">Seguir</button>`;
+  $('modal').classList.add('show');
+}
+
+/* ---------- Eventos ---------- */
+document.addEventListener('click',e=>{
+  const tab=e.target.closest('[data-tab]');if(tab){ui.tab=tab.dataset.tab;render();window.scrollTo(0,0);return}
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const id=b.dataset.id,h=data.habits.find(x=>x.id===id);
+  switch(b.dataset.act){
+    case 'closeModal':$('modal').classList.remove('show');break;
+    case 'toggle':if(h){const r=rec(T());r.done.includes(h.id)?undo(h):complete(h,false)}break;
+    case 'verify':if(h)verify(h);break;
+    case 'adopt':{
+      const p=PRESETS.find(x=>x.id===id);if(!p||slotsFor(lv(data.xp).level)<=data.habits.length)break;
+      data.habits.push({id:p.id,name:p.name,icon:p.icon,attr:p.attr,verify:p.verify||null});
+      const r=rec(T());if(!r.sched.includes(p.id))r.sched.push(p.id);save();render();toast('Nueva misión añadida');break}
+    case 'del':if(h){data.habits=data.habits.filter(x=>x.id!==id);const r=rec(T());r.sched=r.sched.filter(i=>i!==id);save();render()}break;
+    case 'buy':{
+      const it=ITEMS.find(x=>x.id===id);if(!it)break;
+      if(data.owned.includes(id))data.equipped=data.equipped===id?null:id;
+      else if(data.coins>=it.cost){data.coins-=it.cost;data.owned.push(id);data.equipped=id;toast(it.name+' desbloqueado ✨')}
+      save();render();break}
+    case 'import':navigator.clipboard.readText().then(t=>{const r=importHealth(t);if(r.ok){toast('⌚ Datos de Salud importados');render()}else toast(r.msg,true)}).catch(()=>toast('No pude leer el portapapeles. Pulsa «Pegar» cuando iOS lo pregunte.',true));break;
+    case 'backup':navigator.clipboard.writeText(JSON.stringify(data)).then(()=>toast('Copia guardada en el portapapeles')).catch(()=>toast('No pude copiar',true));break;
+    case 'restore':navigator.clipboard.readText().then(t=>{const j=JSON.parse(t);if(typeof j.xp!=='number'||!Array.isArray(j.habits))throw 0;if(!confirm('¿Sustituir tu partida actual por la copia?'))return;data=Object.assign(fresh(),j);rollover();render();toast('Partida restaurada')}).catch(()=>toast('El portapapeles no tiene una copia válida',true));break;
+    case 'healthdebug':Health.today().then(s=>toast('Pasos '+Math.round(s.steps)+' · Entreno '+Math.round(s.workoutMin)+' min · '+Math.round(s.avgHR)+' lpm · Sueño '+s.sleepH+' h · Meditación '+Math.round(s.mindfulMin)+' min')).catch(err=>toast('Error: '+(err&&err.message||err),true));break;
+    case 'simfill':data.sim=Object.assign(data.sim,{steps:9200,workoutMin:38,avgHR:128,sleepH:7.5,mindfulMin:6,manual:false});save();render();break;
+    case 'simzero':data.sim=Object.assign(data.sim,{steps:0,workoutMin:0,avgHR:0,sleepH:0,mindfulMin:0,manual:false});save();render();break;
+    case 'reset':if(confirm('¿Borrar toda tu partida? No se puede deshacer.')){data=fresh();rollover();render();toast('Partida reiniciada')}break;
+  }
+});
+document.addEventListener('change',e=>{
+  if(e.target.hasAttribute&&e.target.hasAttribute('data-dev')){data.devMode=e.target.checked;save();render();return}
+  const s=e.target.dataset&&e.target.dataset.sim;if(!s)return;
+  data.sim[s]=s==='manual'?e.target.checked:Math.max(0,parseFloat(e.target.value)||0);save();
+});
+document.addEventListener('submit',e=>{
+  if(e.target.id!=='custom')return;e.preventDefault();
+  const f=new FormData(e.target),name=String(f.get('name')||'').trim(),attr=String(f.get('attr'));
+  if(!name||!ATTRS[attr]||slotsFor(lv(data.xp).level)<=data.habits.length)return;
+  const id='c_'+name.toLowerCase().replace(/[^a-z0-9áéíóúñü]+/g,'-');
+  if(data.habits.some(x=>x.id===id))return toast('Ya tienes ese hábito',true);
+  data.habits.push({id,name,icon:'🌱',attr,verify:null});
+  const r=rec(T());if(!r.sched.includes(id))r.sched.push(id);save();render();toast('Hábito añadido');
+});
+
+rollover();render();
+if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
+</script>
+</body>
+</html>
