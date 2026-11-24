@@ -230,6 +230,87 @@ async function verify(h){
   catch(err){toast((err&&err.message)||'No pude leer los datos de Salud.',true)}
 }
 
+/* ---------- Lectura de capturas (OCR en el propio móvil) ---------- */
+const norm=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const parseNum=s=>{s=String(s).replace(/\s/g,'');return /^\d{1,3}([.,]\d{3})+$/.test(s)?parseInt(s.replace(/[.,]/g,''),10):parseFloat(s.replace(',','.'))};
+const MONTHS=[['ene','jan'],['feb'],['mar'],['abr','apr'],['may'],['jun'],['jul'],['ago','aug'],['sep','sept'],['oct'],['nov'],['dic','dec']];
+function looksToday(t,d){
+  if(/\b(hoy|today)\b/.test(t))return true;
+  const day=d.getDate();
+  return MONTHS[d.getMonth()].some(m=>new RegExp('\\b'+day+'\\s*(de\\s+)?'+m).test(t)||new RegExp(m+'\\w*\\.?\\s+'+day+'\\b').test(t));
+}
+/* Extrae de un texto de pantalla de Salud/Fitness los datos que sabemos verificar. */
+function parseHealthText(raw,now){
+  const t=norm(raw).replace(/[|]/g,' ');const out={};let m;
+  m=t.match(/(\d{1,3}(?:[.,\s]\d{3})+|\d{1,6})\s*(?:pasos|steps)\b/)||t.match(/\b(?:pasos|steps)\b\D{0,15}(\d{1,3}(?:[.,]\d{3})+|\d{1,6})/);
+  if(m){const v=parseNum(m[1]);if(v>=0&&v<=100000)out.steps=v}
+  m=t.match(/(?:media|average|avg)\D{0,25}(\d{2,3})\s*(?:lpm|ppm|bpm)/)||t.match(/(\d{2,3})\s*(?:lpm|ppm|bpm)/);
+  if(m){const v=parseInt(m[1],10);if(v>=30&&v<=230)out.avgHR=v}
+  m=t.match(/(?:tiempo de entrenamiento|tiempo|duracion|duration|workout time)\D{0,12}(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if(m){const a=+m[1],b=+m[2],c=m[3]?+m[3]:null;const min=c===null?a+b/60:a*60+b+c/60;if(min>0&&min<600)out.workoutMin=Math.round(min)}
+  if(/dorm|sleep|sueno|asleep/.test(t)){m=t.match(/(\d{1,2})\s*(?:h|hr|hrs|horas?)\b(?:\s*(\d{1,2})\s*min)?/);if(m){const v=+m[1]+(m[2]?+m[2]/60:0);if(v>0&&v<=24)out.sleepH=Math.round(v*10)/10}}
+  if(/mindful|atencion plena|meditaci/.test(t)){m=t.match(/(\d{1,3})\s*min\b/);if(m)out.mindfulMin=+m[1]}
+  return{out,today:looksToday(t,now||new Date())};
+}
+window.VEJ_TEST={parseHealthText};
+
+let _tw=null;
+async function ocrWorker(progress){
+  if(!window.Tesseract){
+    await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=res;s.onerror=()=>rej(new Error('Sin conexión: no pude cargar el lector de texto.'));document.head.appendChild(s)});
+  }
+  if(!_tw)_tw=await Tesseract.createWorker('eng',1,{logger:progress});
+  return _tw;
+}
+async function prepImage(file){
+  const bmp=await createImageBitmap(file);
+  const k=Math.min(1,2200/Math.max(bmp.width,bmp.height));
+  const c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);
+  const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bmp,0,0,c.width,c.height);
+  const im=x.getImageData(0,0,c.width,c.height),d=im.data;let sum=0;
+  for(let i=0;i<d.length;i+=4){const g=.299*d[i]+.587*d[i+1]+.114*d[i+2];d[i]=d[i+1]=d[i+2]=g;sum+=g}
+  if(sum/(d.length/4)<115)for(let i=0;i<d.length;i+=4){d[i]=d[i+1]=d[i+2]=255-d[i]}   // modo oscuro → texto oscuro sobre fondo claro
+  x.putImageData(im,0,0);return c;
+}
+let shotRes=null;
+const showBox=h=>{$('modalBox').innerHTML=h;$('modal').classList.add('show')};
+function shotSummary(r){
+  const rows=[];
+  if(r.steps!==undefined)rows.push('👟 '+Math.round(r.steps).toLocaleString('es-ES')+' pasos');
+  if(r.workoutMin!==undefined)rows.push('🏋️ '+r.workoutMin+' min de entreno');
+  if(r.avgHR!==undefined)rows.push('❤️ '+r.avgHR+' lpm de pulso medio');
+  if(r.sleepH!==undefined)rows.push('🌙 '+r.sleepH+' h de sueño');
+  if(r.mindfulMin!==undefined)rows.push('🧘 '+r.mindfulMin+' min de meditación');
+  return rows;
+}
+async function handleShots(files){
+  if(!files.length)return;
+  const merged={},notes=[];
+  try{
+    for(let i=0;i<files.length;i++){
+      showBox(`<div class="eyebrow">Leyendo capturas</div><p>Captura ${i+1} de ${files.length}…</p><p class="small muted" id="ocrp">Preparando el lector (la primera vez descarga unos megas)</p>`);
+      const w=await ocrWorker(m=>{const el=$('ocrp');if(el&&m&&m.status)el.textContent=m.status==='recognizing text'?'Leyendo texto… '+Math.round((m.progress||0)*100)+'%':'Preparando el lector…'});
+      const cv=await prepImage(files[i]);
+      const res=await w.recognize(cv);
+      const r=parseHealthText(res.data.text,new Date());
+      if(!Object.keys(r.out).length){notes.push('Captura '+(i+1)+': no reconocí ningún dato.');continue}
+      const lm=files[i].lastModified,real=lm>0&&Math.abs(Date.now()-lm)>120000;
+      if(!(r.today||(real&&Date.now()-lm<20*36e5))){notes.push('Captura '+(i+1)+': no veo que sea de hoy, así que no la uso.');continue}
+      Object.assign(merged,r.out);
+    }
+  }catch(err){showBox(`<div class="eyebrow" style="color:var(--pink)">No pude leer la captura</div><p class="small">${esc((err&&err.message)||err)}</p><button class="btn" data-act="closeModal" style="width:100%">Cerrar</button>`);return}
+  const rows=shotSummary(merged);
+  if(!rows.length){showBox(`<div class="eyebrow" style="color:var(--pink)">Sin datos</div><p class="small">${notes.map(esc).join('<br>')||'No encontré datos.'}</p><p class="small muted">Haz la captura con el día de hoy visible y el número bien claro.</p><button class="btn" data-act="closeModal" style="width:100%">Cerrar</button>`);return}
+  shotRes=merged;
+  showBox(`<div class="eyebrow">He leído esto</div><p style="line-height:1.9;margin:10px 0">${rows.join('<br>')}</p>${notes.length?`<p class="small muted">${notes.map(esc).join('<br>')}</p>`:''}<p class="small muted">Si algún número no es el que ves, cancela y haz otra captura.</p><div class="row"><button class="btn ghost" data-act="closeModal" style="flex:1">Cancelar</button><button class="btn" data-act="shotApply" style="flex:1">Usar</button></div>`);
+}
+function applyShots(){
+  if(!shotRes)return;
+  const prev=Health.imported()||{steps:0,workoutMin:0,avgHR:0,sleepH:0,mindfulMin:0};
+  data.health=Object.assign({},prev,shotRes,{day:T(),ts:Date.now(),manual:false,source:'captura'});
+  shotRes=null;save();$('modal').classList.remove('show');render();toast('📷 Datos de hoy guardados');
+}
+
 /* ---------- Personaje (SVG) ---------- */
 function avatar(stage,eq){
   const c=TUNIC[stage];
@@ -282,7 +363,7 @@ function viewHoy(){
   let h=headCard();
   const done=data.habits.filter(x=>r.done.includes(x.id)).length;
   h+=`<div class="card"><div class="row between"><h2>Misiones de hoy</h2><span class="small muted">${done} de ${data.habits.length}</span></div>`;
-  if(data.habits.some(x=>x.verify)&&!Health.isReal()){const imp=Health.imported();h+=`<div class="lockbox row between" style="margin:12px 0 0"><span>⌚ ${imp?'Salud importada a las '+hora(imp.ts):'Sin datos de Salud de hoy'}</span><button class="btn cyan" data-act="import">Importar</button></div>`}
+  if(data.habits.some(x=>x.verify)&&!Health.isReal()){const imp=Health.imported();h+=`<div class="lockbox row between" style="margin:12px 0 0"><span>⌚ ${imp?'Salud importada a las '+hora(imp.ts):'Sin datos de Salud de hoy'}</span><label class="btn cyan" style="cursor:pointer">📷 Captura<input type="file" accept="image/*" multiple data-shot hidden></label></div>`}
   if(!data.habits.length)h+='<p class="muted small">Aún no hay misiones.</p>';
   h+=data.habits.map(x=>{
     const ok=r.done.includes(x.id);
@@ -334,7 +415,9 @@ function viewAjustes(){
   if(Health.isReal()){
     h+='<p class="small muted" style="margin:4px 0 12px">Conectado a Apple Salud.</p><button class="btn ghost" data-act="healthdebug">Probar lectura de Apple Salud</button>';
   }else{
-    h+=`<p class="small muted" style="margin:4px 0 12px">${imp?'Importados hoy a las '+hora(imp.ts)+': '+resumen(imp)+'.':'Hoy no has importado datos. Ejecuta tu Atajo de Salud y pulsa Importar.'}</p><button class="btn cyan" data-act="import">Importar desde el portapapeles</button>
+    h+=`<p class="small muted" style="margin:4px 0 12px">${imp?'Importados hoy a las '+hora(imp.ts)+': '+resumen(imp)+'.':'Hoy no has subido ninguna captura.'}</p><label class="btn cyan" style="cursor:pointer;display:inline-block">📷 Subir captura<input type="file" accept="image/*" multiple data-shot hidden></label>
+    <p class="small muted" style="margin:12px 0 0">Haz la captura con el día de hoy visible: <b>Pasos</b> (Salud → Pasos), <b>entreno</b> (Fitness, con tiempo y pulsación media), <b>Sueño</b> o <b>Mindfulness</b> en Salud. Puedes subir varias a la vez. La primera vez descarga el lector de texto (unos MB) y necesita internet.</p>
+    <button class="btn ghost" data-act="import" style="margin-top:12px">Importar desde un Atajo (avanzado)</button>
     <label class="row small muted" style="margin-top:14px"><input type="checkbox" data-dev ${data.devMode?'checked':''}> Modo prueba (simulador, sin verificación real)</label>`;
     if(data.devMode)h+=`<div class="grid2" style="margin-top:12px">${numField('steps','Pasos hoy',100)}${numField('workoutMin','Entreno (min)')}${numField('avgHR','Pulsación media (lpm)')}${numField('sleepH','Sueño (h)',.5)}${numField('mindfulMin','Meditación (min)')}</div>
     <div class="row" style="margin-top:12px"><button class="btn ghost" data-act="simfill">Simular día activo</button><button class="btn ghost" data-act="simzero">Poner a cero</button></div>`;
@@ -372,6 +455,7 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const id=b.dataset.id,h=data.habits.find(x=>x.id===id);
   switch(b.dataset.act){
+    case 'shotApply':applyShots();break;
     case 'closeModal':$('modal').classList.remove('show');break;
     case 'toggle':if(h){const r=rec(T());r.done.includes(h.id)?undo(h):complete(h,false)}break;
     case 'verify':if(h)verify(h);break;
@@ -395,6 +479,7 @@ document.addEventListener('click',e=>{
   }
 });
 document.addEventListener('change',e=>{
+  if(e.target.hasAttribute&&e.target.hasAttribute('data-shot')){const fs=[...e.target.files];e.target.value='';handleShots(fs);return}
   if(e.target.hasAttribute&&e.target.hasAttribute('data-dev')){data.devMode=e.target.checked;save();render();return}
   const s=e.target.dataset&&e.target.dataset.sim;if(!s)return;
   data.sim[s]=s==='manual'?e.target.checked:Math.max(0,parseFloat(e.target.value)||0);save();
